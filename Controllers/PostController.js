@@ -15,10 +15,11 @@ export const createPost = async (req, res) => {
   }
 };
 
-//  Get a Post from
+// get a post
 
 export const getPost = async (req, res) => {
   const id = req.params.id;
+
   try {
     const post = await PostModel.findById(id);
     res.status(200).json(post);
@@ -27,7 +28,19 @@ export const getPost = async (req, res) => {
   }
 };
 
-// Update PostModel
+// //  Get a Post from
+
+// export const getPost = async (req, res) => {
+//   const id = req.params.id;
+//   try {
+//     const post = await PostModel.findById(id);
+//     res.status(200).json(post);
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// };
+
+// update post
 export const updatePost = async (req, res) => {
   const postId = req.params.id;
   const { userId } = req.body;
@@ -36,14 +49,30 @@ export const updatePost = async (req, res) => {
     const post = await PostModel.findById(postId);
     if (post.userId === userId) {
       await post.updateOne({ $set: req.body });
-      res.status(200).json("Post Updated");
+      res.status(200).json("Post updated!");
     } else {
-      res.status(403).json("Action forbidden");
+      res.status(403).json("Authentication failed");
     }
-  } catch (error) {
-    res.status(500).json(error);
-  }
+  } catch (error) {}
 };
+
+// // Update PostModel
+// export const updatePost = async (req, res) => {
+//   const postId = req.params.id;
+//   const { userId } = req.body;
+
+//   try {
+//     const post = await PostModel.findById(postId);
+//     if (post.userId === userId) {
+//       await post.updateOne({ $set: req.body });
+//       res.status(200).json("Post Updated");
+//     } else {
+//       res.status(403).json("Action forbidden");
+//     }
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// };
 
 // Delete a Post
 
@@ -64,27 +93,46 @@ export const deletePost = async (req, res) => {
   }
 };
 
-//  Like / Dislike Post
 
+// like/dislike a post
 export const likePost = async (req, res) => {
   const id = req.params.id;
   const { userId } = req.body;
-
   try {
     const post = await PostModel.findById(id);
-    if (!post.likes.includes(userId)) {
-      await post.updateOne({ $push: { likes: userId } });
-      res.status(200).json("Post Liked");
-    } else {
+    if (post.likes.includes(userId)) {
       await post.updateOne({ $pull: { likes: userId } });
-      res.status(200).json("Post unLiked");
+      res.status(200).json("Post disliked");
+    } else {
+      await post.updateOne({ $push: { likes: userId } });
+      res.status(200).json("Post liked");
     }
   } catch (error) {
     res.status(500).json(error);
   }
 };
 
-// Get timeline posts
+// //  Like / Dislike Post
+
+// export const likePost = async (req, res) => {
+//   const id = req.params.id;
+//   const { userId } = req.body;
+
+//   try {
+//     const post = await PostModel.findById(id);
+//     if (!post.likes.includes(userId)) {
+//       await post.updateOne({ $push: { likes: userId } });
+//       res.status(200).json("Post Liked");
+//     } else {
+//       await post.updateOne({ $pull: { likes: userId } });
+//       res.status(200).json("Post unLiked");
+//     }
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// };
+
+
 export const getTimelinePosts = async (req, res) => {
   const userId = req.params.id
   try {
@@ -123,3 +171,43 @@ export const getTimelinePosts = async (req, res) => {
     res.status(500).json(error);
   }
 };
+
+// // Get timeline posts
+// export const getTimelinePosts = async (req, res) => {
+//   const userId = req.params.id
+//   try {
+//     const currentUserPosts = await PostModel.find({ userId: userId });
+
+//     const followingPosts = await UserModel.aggregate([
+//       { 
+//         $match: {
+//           _id: new mongoose.Types.ObjectId(userId),
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "posts",
+//           localField: "following",
+//           foreignField: "userId",
+//           as: "followingPosts",
+//         },
+//       },
+//       {
+//         $project: {
+//           followingPosts: 1,
+//           _id: 0,
+//         },
+//       },
+//     ]);
+
+//     res.status(200).json(
+//       currentUserPosts
+//         .concat(...followingPosts[0].followingPosts)
+//         .sort((a, b) => {
+//           return new Date(b.createdAt) - new Date(a.createdAt);
+//         })
+//     );
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// };
